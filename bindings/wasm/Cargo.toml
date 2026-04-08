@@ -1,0 +1,18 @@
+[package]
+name = "docoxide-wasm"
+description = "WASM bindings for docoxide, a fast HTML to PDF converter written in Rust"
+version = "0.1.0-alpha.1"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+readme = "README.md"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+docoxide = { path = "../../crates/docoxide" }
+wasm-bindgen = "0.2.117"

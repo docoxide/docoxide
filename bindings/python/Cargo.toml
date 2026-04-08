@@ -1,0 +1,19 @@
+[package]
+name = "docoxide-py"
+description = "Python bindings for docoxide, a fast HTML to PDF converter written in Rust"
+version = "0.1.0-alpha.1"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+readme = "README.md"
+publish = false
+
+[lib]
+name = "docoxide"
+crate-type = ["cdylib"]
+
+[dependencies]
+docoxide = { path = "../../crates/docoxide" }
+pyo3 = { version = "0.28.3", features = ["extension-module", "abi3-py39"] }
