@@ -53,4 +53,4 @@ jobs:
 
       - name: Publish to npm
         working-directory: bindings/wasm
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --tag next
