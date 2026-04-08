@@ -41,7 +41,7 @@ jobs:
           manylinux: auto
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: wheels-${{ matrix.platform.os }}-${{ matrix.platform.target }}
           path: bindings/python/dist
@@ -65,7 +65,7 @@ jobs:
           args: --out dist
 
       - name: Upload sdist artifact
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: wheels-sdist
           path: bindings/python/dist
