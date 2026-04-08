@@ -1,0 +1,64 @@
+{
+  "name": "docoxide",
+  "version": "0.1.0-alpha.1",
+  "description": "WASM bindings for docoxide, a fast HTML to PDF converter written in Rust",
+  "main": "pkg-nodejs/docoxide_wasm.js",
+  "module": "pkg-bundler/docoxide_wasm.js",
+  "browser": "pkg-web/docoxide_wasm.js",
+  "types": "pkg-nodejs/docoxide_wasm.d.ts",
+  "exports": {
+    ".": {
+      "types": "./pkg-nodejs/docoxide_wasm.d.ts",
+      "node": {
+        "require": "./pkg-nodejs/docoxide_wasm.js",
+        "import": "./pkg-bundler/docoxide_wasm.js"
+      },
+      "deno": "./pkg-deno/docoxide_wasm.js",
+      "browser": "./pkg-web/docoxide_wasm.js",
+      "default": "./pkg-bundler/docoxide_wasm.js"
+    },
+    "./nodejs": "./pkg-nodejs/docoxide_wasm.js",
+    "./bundler": "./pkg-bundler/docoxide_wasm.js",
+    "./web": "./pkg-web/docoxide_wasm.js",
+    "./deno": "./pkg-deno/docoxide_wasm.js",
+    "./no-modules": "./pkg-no-modules/docoxide_wasm.js"
+  },
+  "bin": {
+    "docoxide": "./cli.cjs"
+  },
+  "files": [
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "cli.cjs",
+    "pkg-bundler/",
+    "pkg-deno/",
+    "pkg-no-modules/",
+    "pkg-nodejs/",
+    "pkg-web/"
+  ],
+  "keywords": [
+    "converter",
+    "html",
+    "pdf",
+    "rust",
+    "wasm"
+  ],
+  "author": {
+    "name": "Ronie Martinez",
+    "email": "ronmarti18@gmail.com"
+  },
+  "license": "(MIT OR Apache-2.0)",
+  "homepage": "https://github.com/docoxide/docoxide",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/docoxide/docoxide.git",
+    "directory": "bindings/wasm"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "commander": "14.0.3"
+  }
+}

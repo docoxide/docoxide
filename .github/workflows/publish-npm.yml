@@ -1,0 +1,56 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish docoxide to npm
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.release.tag_name, 'all-v') ||
+      startsWith(github.event.release.tag_name, 'wasm-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2.75.0
+        with:
+          tool: wasm-pack
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5.0.0
+        with:
+          node-version: "24.14.1"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Build all wasm targets
+        working-directory: bindings/wasm
+        run: |
+          wasm-pack build --target nodejs --out-dir pkg-nodejs
+          wasm-pack build --target bundler --out-dir pkg-bundler
+          wasm-pack build --target web --out-dir pkg-web
+          wasm-pack build --target no-modules --out-dir pkg-no-modules
+          wasm-pack build --target deno --out-dir pkg-deno
+
+      - name: Publish to npm
+        working-directory: bindings/wasm
+        run: npm publish --provenance --access public
