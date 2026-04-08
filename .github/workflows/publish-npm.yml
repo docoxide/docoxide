@@ -54,4 +54,10 @@ jobs:
 
       - name: Publish to npm
         working-directory: bindings/wasm
-        run: npm publish --provenance --access public --tag next
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [[ "$version" == *-* ]]; then
+            npm publish --provenance --access public --tag next
+          else
+            npm publish --provenance --access public
+          fi
