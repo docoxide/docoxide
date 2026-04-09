@@ -102,7 +102,9 @@ fn run(cli: Cli) -> docoxide::Result<()> {
             }
         }
         None => {
-            io::stdout().write_all(pdf.as_bytes())?;
+            let mut out = io::stdout().lock();
+            out.write_all(pdf.as_bytes())?;
+            out.flush()?;
         }
     }
 
