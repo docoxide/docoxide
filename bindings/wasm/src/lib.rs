@@ -107,7 +107,7 @@ impl HTML {
     ///
     /// Pass a WritePdfOptions to apply additional stylesheets.
     #[wasm_bindgen(js_name = "writePdf")]
-    pub async fn write_pdf(&self, options: Option<WritePdfOptions>) -> PDF {
+    pub async fn write_pdf(&self, options: Option<WritePdfOptions>) -> Result<PDF, JsValue> {
         let mut html = docoxide::Html::new(self.source.clone());
 
         for css in &self.stylesheets {
@@ -124,19 +124,15 @@ impl HTML {
             html = html.with_config(&config);
         }
 
-        match html.write_pdf().await {
-            Ok(pdf) => {
-                let page_count = pdf.page_count();
-                PDF {
-                    bytes: pdf.into_bytes(),
-                    page_count,
-                }
-            }
-            Err(_) => PDF {
-                bytes: Vec::new(),
-                page_count: 0,
-            },
-        }
+        let pdf = html
+            .write_pdf()
+            .await
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let page_count = pdf.page_count();
+        Ok(PDF {
+            bytes: pdf.into_bytes(),
+            page_count,
+        })
     }
 }
 

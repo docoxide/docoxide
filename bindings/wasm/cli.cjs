@@ -93,6 +93,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  process.stderr.write(`docoxide: error: ${err.message}\n`);
+  process.stderr.write(`docoxide: error: ${err.message || err}\n`);
   process.exit(1);
 });
