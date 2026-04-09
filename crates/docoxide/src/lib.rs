@@ -19,12 +19,12 @@ pub use types::Metadata;
 ///
 /// Shorthand for [`Html::new`] + [`Html::write_pdf`].
 #[cfg(not(target_arch = "wasm32"))]
-pub fn convert(html: &str, css: Option<&str>) -> Vec<u8> {
-    pipeline::run_simple(html, css).unwrap_or_default()
+pub fn convert(html: &str, css: Option<&str>) -> Result<Vec<u8>> {
+    pipeline::run_simple(html, css)
 }
 
 /// Convert an HTML document into PDF bytes (async for WASM).
 #[cfg(target_arch = "wasm32")]
-pub async fn convert(html: &str, css: Option<&str>) -> Vec<u8> {
-    pipeline::run_simple(html, css).await.unwrap_or_default()
+pub async fn convert(html: &str, css: Option<&str>) -> Result<Vec<u8>> {
+    pipeline::run_simple(html, css).await
 }

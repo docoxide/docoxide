@@ -110,14 +110,14 @@ fn linked_css() {
 
 #[test]
 fn convert_simple() {
-    let bytes = docoxide::convert("<h1>Hello</h1>", None);
+    let bytes = docoxide::convert("<h1>Hello</h1>", None).expect("conversion should succeed");
     assert!(!bytes.is_empty());
     assert!(bytes.starts_with(b"%PDF"));
 }
 
 #[test]
 fn convert_with_css() {
-    let bytes = docoxide::convert("<h1>Hello</h1>", Some("h1 { color: red; }"));
+    let bytes = docoxide::convert("<h1>Hello</h1>", Some("h1 { color: red; }")).expect("conversion should succeed");
     assert!(!bytes.is_empty());
     assert!(bytes.starts_with(b"%PDF"));
 }

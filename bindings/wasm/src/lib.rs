@@ -190,6 +190,8 @@ impl WritePdfOptions {
 
 /// Converts an HTML string (with optional CSS) to PDF bytes.
 #[wasm_bindgen]
-pub async fn convert(html: &str, css: Option<String>) -> Vec<u8> {
-    docoxide::convert(html, css.as_deref()).await
+pub async fn convert(html: &str, css: Option<String>) -> Result<Vec<u8>, JsValue> {
+    docoxide::convert(html, css.as_deref())
+        .await
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }

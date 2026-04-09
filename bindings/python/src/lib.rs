@@ -295,8 +295,8 @@ impl PDF {
 /// Converts an HTML string (with optional CSS) to PDF bytes.
 #[pyfunction]
 #[pyo3(signature = (html, css=None))]
-fn convert(html: &str, css: Option<&str>) -> Vec<u8> {
-    ::docoxide::convert(html, css)
+fn convert(html: &str, css: Option<&str>) -> PyResult<Vec<u8>> {
+    ::docoxide::convert(html, css).map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
 #[pymodule]
