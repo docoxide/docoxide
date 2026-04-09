@@ -216,19 +216,25 @@ pub async fn run(html: Html) -> Result<Pdf> {
     let config = html.config.unwrap_or_default();
 
     let Html {
-        source, stylesheets, ..
+        source,
+        stylesheets,
+        base_url,
+        ..
     } = html;
 
     let mut font_ctx = build_font_context();
     resolve_fonts(&mut font_ctx, config.fonts)?;
 
-    let html_string = match source {
-        HtmlSource::String(s) => s,
+    let (html_string, base_url_str) = match source {
+        HtmlSource::String(s) => (s, base_url.map(|u| u.to_string())),
         HtmlSource::Url(url) => {
+            let resolved = url.to_string();
             let bytes = js_fetch(url.as_str())
                 .await
                 .ok_or_else(|| crate::error::Error::Network(format!("failed to fetch {url}")))?;
-            String::from_utf8(bytes.to_vec()).map_err(|e| crate::error::Error::Network(e.to_string()))?
+            let html_str =
+                String::from_utf8(bytes.to_vec()).map_err(|e| crate::error::Error::Network(e.to_string()))?;
+            (html_str, base_url.map(|u| u.to_string()).or(Some(resolved)))
         }
     };
     let extra_css = resolve_stylesheets(stylesheets)?;
@@ -243,6 +249,7 @@ pub async fn run(html: Html) -> Result<Pdf> {
 
     let doc_config = blitz_dom::DocumentConfig {
         viewport: Some(viewport),
+        base_url: base_url_str,
         font_ctx: Some(font_ctx),
         ua_stylesheets: Some(vec![BLITZ_DEFAULT_CSS.to_string(), DEFAULT_CSS.to_string()]),
         net_provider: Some(provider.clone() as Arc<dyn NetProvider>),

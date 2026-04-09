@@ -124,10 +124,7 @@ impl HTML {
             html = html.with_config(&config);
         }
 
-        let pdf = html
-            .write_pdf()
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let pdf = html.write_pdf().await.map_err(|e| JsValue::from_str(&e.to_string()))?;
         let page_count = pdf.page_count();
         Ok(PDF {
             bytes: pdf.into_bytes(),
