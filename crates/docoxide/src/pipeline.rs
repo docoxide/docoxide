@@ -141,7 +141,7 @@ fn render_pdf(
         painter.finish_page();
     }
 
-    let bytes = painter.finish();
+    let bytes = painter.finish().map_err(crate::error::Error::PdfGeneration)?;
     Ok(Pdf { bytes, page_count })
 }
 

@@ -299,7 +299,7 @@ impl PdfScenePainter {
         self.layer_push_counts.clear();
     }
 
-    pub fn finish(self) -> Vec<u8> {
+    pub fn finish(self) -> Result<Vec<u8>, String> {
         use krilla::document::Document;
         use krilla::page::PageSettings;
 
@@ -309,10 +309,12 @@ impl PdfScenePainter {
         }
 
         for page_data in &self.pages {
-            let settings = match PageSettings::from_wh(page_data.width_pt, page_data.height_pt) {
-                Some(s) => s,
-                None => return b"%PDF-1.7\n".to_vec(),
-            };
+            let settings = PageSettings::from_wh(page_data.width_pt, page_data.height_pt).ok_or_else(|| {
+                format!(
+                    "invalid page dimensions: {}x{} pt",
+                    page_data.width_pt, page_data.height_pt
+                )
+            })?;
             let mut page = doc.start_page_with(settings);
             let mut surface = page.surface();
 
@@ -472,7 +474,7 @@ impl PdfScenePainter {
             page.finish();
         }
 
-        doc.finish().unwrap_or_else(|_| b"%PDF-1.7\n".to_vec())
+        doc.finish().map_err(|e| format!("PDF generation failed: {e:?}"))
     }
 }
 
