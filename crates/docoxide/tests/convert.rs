@@ -8,7 +8,7 @@ const UNSTYLED_HTML: &str = include_str!("fixtures/unstyled.html");
 const NOTO_SANS: &[u8] = include_bytes!("../fonts/NotoSans-Variable.ttf");
 const NOTO_SANS_ITALIC: &[u8] = include_bytes!("../fonts/NotoSans-Italic-Variable.ttf");
 
-const FONT_CSS: &str = "* { font-family: 'Noto Sans', sans-serif !important; }";
+const FONT_CSS: &str = "* { font-family: 'Noto Sans', sans-serif; }";
 
 fn base_config() -> Config {
     Config::new()
