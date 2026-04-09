@@ -40,9 +40,11 @@ tasks:
     sources:
       - src/**/*.rs
       - Cargo.toml
+      - ../../Cargo.toml
       - ../../crates/docoxide/src/**/*.rs
       - ../../crates/docoxide/Cargo.toml
       - ../../vendor/blitz/packages/*/src/**/*.rs
+      - ../../vendor/parley/*/src/**/*.rs
     generates:
       - pkg-nodejs/docoxide_wasm.js
     cmds:
@@ -54,9 +56,11 @@ tasks:
     sources:
       - src/**/*.rs
       - Cargo.toml
+      - ../../Cargo.toml
       - ../../crates/docoxide/src/**/*.rs
       - ../../crates/docoxide/Cargo.toml
       - ../../vendor/blitz/packages/*/src/**/*.rs
+      - ../../vendor/parley/*/src/**/*.rs
     cmds:
       - uv run --with maturin maturin develop --release --quiet
 
