@@ -53,12 +53,12 @@ echo '<h1>Hello</h1>' | docoxide --output hello.pdf
 | Create from URL | `Html::new(url)` | `HTML(url="...")` | `HTML.fromUrl("...")` |
 | Create from file | `Html::new(Url::from_file_path(...))` | `HTML(filename="...")` | |
 | Create from reader | `Html::from_reader(r)` | `HTML(file_obj=f)` | |
-| Add stylesheet (string) | `.with_stylesheet("...")` | `html.add_stylesheet("...")` | `opts.addStylesheet("...")` |
+| Add stylesheet (string) | `.with_stylesheet("...")` | `html.add_stylesheet("...")` | `html.addStylesheet("...")` |
 | Add stylesheet (CSS/file) | `.with_stylesheet(path)` | `html.add_stylesheet(CSS(...))` | |
 | Stylesheets at render | | `write_pdf(stylesheets=[...])` | `writePdf(opts)` |
 | Base URL | `.with_base_url(url)` | `HTML(base_url="...")` | |
 | Add font | `config.with_font(path)` | `html.add_font(filename="...")` | |
-| Set metadata | `config.with_metadata(...)` | `html.set_metadata(...)` | |
+| Set metadata | `config.with_metadata(...)` | `html.set_metadata(...)` | `html.setMetadata(meta)` |
 | Render to PDF | `html.write_pdf()` | `html.write_pdf()` | `await html.writePdf()` |
 | Save to file | `pdf.write_pdf("out.pdf")` | `html.write_pdf("out.pdf")` | |
 | Save to writer | `pdf.write_to(writer)` | `html.write_pdf(file_obj)` | |

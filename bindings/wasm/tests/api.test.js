@@ -1,4 +1,4 @@
-const { HTML, WritePdfOptions, convert } = require('../pkg-nodejs/docoxide_wasm.js');
+const { HTML, Metadata, WritePdfOptions, convert } = require('../pkg-nodejs/docoxide_wasm.js');
 const assert = require('assert');
 const { describe, it } = require('node:test');
 
@@ -29,9 +29,21 @@ describe('HTML class', () => {
     assert.strictEqual(Buffer.from(pdf.asBytes().slice(0, 8)).toString(), '%PDF-1.7');
   });
 
-  it('works without options', async () => {
-    const pdf = await new HTML('<h1>Hello</h1>').writePdf();
-    assert.ok(pdf.asBytes().length > 0);
+  it('adds stylesheet via addStylesheet()', async () => {
+    const html = new HTML('<h1>Hello</h1>');
+    html.addStylesheet('h1 { color: blue; }');
+    const pdf = await html.writePdf();
+    assert.strictEqual(Buffer.from(pdf.asBytes().slice(0, 8)).toString(), '%PDF-1.7');
+  });
+
+  it('sets metadata', async () => {
+    const html = new HTML('<h1>Hello</h1>');
+    const meta = new Metadata();
+    meta.setTitle('Test');
+    meta.setAuthor('Author');
+    html.setMetadata(meta);
+    const pdf = await html.writePdf();
+    assert.strictEqual(Buffer.from(pdf.asBytes().slice(0, 8)).toString(), '%PDF-1.7');
   });
 
   it('creates from URL via fromUrl()', () => {

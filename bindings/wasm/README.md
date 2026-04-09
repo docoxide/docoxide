@@ -15,32 +15,47 @@ npm install docoxide
 ## Library usage
 
 ```javascript
-const { HTML, WritePdfOptions, convert } = require("docoxide");
+const { HTML, Metadata, WritePdfOptions, convert } = require("docoxide");
 const fs = require("node:fs");
 
-// Using the HTML class
-const html = new HTML("<h1>Hello</h1>");
-const pdf = html.writePdf();
-fs.writeFileSync("hello.pdf", Buffer.from(pdf));
+// From a string
+const pdf = await new HTML("<h1>Hello</h1>").writePdf();
+fs.writeFileSync("hello.pdf", Buffer.from(pdf.asBytes()));
+console.log(`${pdf.pageCount} page(s)`);
+```
+
+From a URL:
+
+```javascript
+const html = HTML.fromUrl("https://example.com");
+const pdf = await html.writePdf();
 ```
 
 With stylesheets:
 
 ```javascript
-const opts = new WritePdfOptions();
-opts.addStylesheet("h1 { color: red; }");
-opts.addStylesheet("body { margin: 1in; }");
+const html = new HTML("<h1>Hello</h1>");
+html.addStylesheet("h1 { color: red; }");
+html.addStylesheet("body { margin: 1in; }");
+const pdf = await html.writePdf();
+```
 
-const pdf = new HTML("<h1>Hello</h1>").writePdf(opts);
+With metadata:
+
+```javascript
+const html = new HTML("<h1>Hello</h1>");
+const meta = new Metadata();
+meta.setTitle("My Document");
+meta.setAuthor("Jane Doe");
+html.setMetadata(meta);
+const pdf = await html.writePdf();
 ```
 
 Simple one-liner:
 
 ```javascript
-const pdf = convert("<h1>Hello</h1>", "h1 { color: red; }");
+const pdfBytes = await convert("<h1>Hello</h1>", "h1 { color: red; }");
 ```
-
-The functions return a `Uint8Array` of PDF bytes.
 
 ## CLI usage
 
@@ -48,6 +63,7 @@ The functions return a `Uint8Array` of PDF bytes.
 npm install -g docoxide
 docoxide --input page.html --output page.pdf
 docoxide --input page.html --stylesheet style.css --output page.pdf
+docoxide --input page.html --metadata title="My Doc" --output page.pdf
 ```
 
 Reads from stdin if `--input` is omitted or set to `-`:
