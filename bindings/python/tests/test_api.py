@@ -102,15 +102,18 @@ def test_as_bytes():
     assert pdf.as_bytes()[:8] == b"%PDF-1.7"
 
 
+FONTS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "crates" / "docoxide" / "fonts"
+
+
 def test_add_font_from_file():
     html = HTML(string='<h1 style="font-family: NotoSans">Hello</h1>')
-    html.add_font(filename="../../crates/docoxide/fonts/NotoSans-Variable.ttf")
+    html.add_font(filename=str(FONTS_DIR / "NotoSans-Variable.ttf"))
     pdf = html.write_pdf()
     assert bytes(pdf)[:8] == b"%PDF-1.7"
 
 
 def test_add_font_from_bytes():
-    with open("../../crates/docoxide/fonts/NotoSans-Variable.ttf", "rb") as f:
+    with open(FONTS_DIR / "NotoSans-Variable.ttf", "rb") as f:
         font_bytes = f.read()
     html = HTML(string='<h1 style="font-family: NotoSans">Hello</h1>')
     html.add_font(font_bytes=font_bytes)
