@@ -257,6 +257,9 @@ impl HTML {
             }
             Some(t) => {
                 t.call_method1("write", (result.bytes.clone(),))?;
+                if t.hasattr("flush")? {
+                    t.call_method0("flush")?;
+                }
                 Ok(result)
             }
         }
