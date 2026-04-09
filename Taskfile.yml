@@ -27,6 +27,57 @@ tasks:
       - npm install --silent
       - node cli.cjs {{.CLI_ARGS}}
 
+  test:
+    desc: Run all tests (Rust, Python, WASM)
+    cmds:
+      - task: test:rust
+      - task: test:python
+      - task: test:wasm
+
+  build:wasm:
+    desc: Build WASM nodejs target
+    dir: bindings/wasm
+    sources:
+      - src/**/*.rs
+      - Cargo.toml
+      - ../../crates/docoxide/src/**/*.rs
+      - ../../crates/docoxide/Cargo.toml
+      - ../../vendor/blitz/packages/*/src/**/*.rs
+    generates:
+      - pkg-nodejs/docoxide_wasm.js
+    cmds:
+      - wasm-pack build --target nodejs --out-dir pkg-nodejs
+
+  build:python:
+    desc: Build Python extension
+    dir: bindings/python
+    sources:
+      - src/**/*.rs
+      - Cargo.toml
+      - ../../crates/docoxide/src/**/*.rs
+      - ../../crates/docoxide/Cargo.toml
+      - ../../vendor/blitz/packages/*/src/**/*.rs
+    cmds:
+      - uv run --with maturin maturin develop --release --quiet
+
+  test:rust:
+    desc: Run Rust tests
+    cmds:
+      - cargo test -p docoxide --test convert -- --test-threads=1
+
+  test:python:
+    desc: Run Python tests
+    deps: [build:python]
+    dir: bindings/python
+    cmds:
+      - uv run --with pytest pytest tests/test_api.py -q
+
+  test:wasm:
+    desc: Run WASM tests via Node.js
+    deps: [build:wasm]
+    cmds:
+      - node --test bindings/wasm/tests/api.test.js
+
   tag:
     desc: Create release tags (e.g. `task tag -- python --dry-run`). See scripts/tag.py --help.
     cmds:

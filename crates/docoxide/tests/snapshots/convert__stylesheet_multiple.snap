@@ -1,0 +1,6 @@
+---
+source: crates/docoxide/tests/convert.rs
+expression: bytes
+extension: pdf
+snapshot_kind: binary
+---

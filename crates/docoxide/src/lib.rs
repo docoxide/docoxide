@@ -1,26 +1,30 @@
-//! `docoxide` is an HTML to PDF conversion library.
-//!
-//! [`convert`] takes an HTML document and an optional CSS stylesheet and
-//! returns the rendered PDF as a byte vector.
-//!
-//! # Example
-//!
-//! ```
-//! let html = "<h1>Hello</h1>";
-//! let pdf = docoxide::convert(html, None);
-//! assert!(pdf.is_empty()); // stub implementation
-//! ```
+pub mod config;
+pub mod error;
+pub mod fonts;
+pub mod html;
+pub mod painter;
+pub mod pdf;
+pub mod pipeline;
+pub mod source;
+pub mod types;
+
+pub use config::Config;
+pub use error::{Error, Result};
+pub use html::Html;
+pub use pdf::Pdf;
+pub use source::{FontSource, HtmlSource, StylesheetSource};
+pub use types::Metadata;
 
 /// Convert an HTML document into PDF bytes.
 ///
-/// # Arguments
-///
-/// * `html` - The HTML source to render.
-/// * `css` - Optional CSS stylesheet to apply.
-///
-/// # Returns
-///
-/// A `Vec<u8>` containing the rendered PDF document.
-pub fn convert(_html: &str, _css: Option<&str>) -> Vec<u8> {
-    Vec::new()
+/// This is a convenience wrapper around [`Html::new`] and [`Html::write_pdf`].
+#[cfg(not(target_arch = "wasm32"))]
+pub fn convert(html: &str, css: Option<&str>) -> Vec<u8> {
+    pipeline::run_simple(html, css).unwrap_or_default()
+}
+
+/// Convert an HTML document into PDF bytes (async for WASM).
+#[cfg(target_arch = "wasm32")]
+pub async fn convert(html: &str, css: Option<&str>) -> Vec<u8> {
+    pipeline::run_simple(html, css).await.unwrap_or_default()
 }

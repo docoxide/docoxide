@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (native)
+        run: cargo clippy --workspace --all-targets --exclude docoxide-wasm -- -D warnings
+
+      - name: Clippy (wasm)
+        run: cargo clippy --target wasm32-unknown-unknown -p docoxide -p docoxide-wasm --lib -- -D warnings
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Cargo deny
+        run: cargo deny check
+
+  test-rust:
+    name: Test (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: cargo test -p docoxide --test convert -- --test-threads=1
+
+  test-python:
+    name: Test (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build and test
+        working-directory: bindings/python
+        run: |
+          pip install maturin pytest
+          maturin develop --release
+          pytest tests/test_api.py -q
+
+  test-wasm:
+    name: Test (WASM)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build and test
+        run: |
+          cd bindings/wasm && wasm-pack build --target nodejs --out-dir pkg-nodejs
+          cd ../..
+          node --test bindings/wasm/tests/api.test.js

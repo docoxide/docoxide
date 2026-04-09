@@ -1,66 +1,138 @@
-use std::fs;
-use std::io::{self, Read};
-use std::path::{Path, PathBuf};
+use std::io::{self, Read, Write};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::Parser;
 
-/// Convert HTML (with optional CSS) to PDF.
+/// Fast, browser-free HTML to PDF converter.
 #[derive(Debug, Parser)]
 #[command(name = "docoxide", version, about)]
 struct Cli {
-    /// Path to the input HTML file. Reads from stdin if omitted or set to `-`.
+    /// HTML input: file path, URL (http/https/file), or - for stdin.
+    /// Reads from stdin if omitted.
     #[arg(short, long)]
-    input: Option<PathBuf>,
+    input: Option<String>,
 
-    /// Optional path to a CSS file.
+    /// Additional CSS stylesheet file. Can be repeated.
+    #[arg(short = 's', long = "stylesheet")]
+    stylesheets: Vec<PathBuf>,
+
+    /// Base URL for resolving relative links and images.
     #[arg(short, long)]
-    css: Option<PathBuf>,
+    base_url: Option<String>,
 
-    /// Path to the output PDF file.
+    /// PDF metadata as key=value. Can be repeated.
+    /// Keys: title, author, subject, keywords, creation_date.
+    /// Example: --metadata title="My Doc" --metadata author="Jane"
+    #[arg(short, long = "metadata")]
+    metadata: Vec<String>,
+
+    /// Custom font file. Can be repeated.
+    #[arg(long = "font")]
+    fonts: Vec<PathBuf>,
+
+    /// Output PDF file. Writes to stdout if omitted.
     #[arg(short, long)]
-    output: PathBuf,
-}
+    output: Option<PathBuf>,
 
-fn read_input(path: Option<&Path>) -> io::Result<String> {
-    match path {
-        None => read_stdin(),
-        Some(p) if p == Path::new("-") => read_stdin(),
-        Some(p) => fs::read_to_string(p),
-    }
-}
-
-fn read_stdin() -> io::Result<String> {
-    let mut s = String::new();
-    io::stdin().read_to_string(&mut s)?;
-    Ok(s)
+    /// Suppress progress output.
+    #[arg(short, long)]
+    quiet: bool,
 }
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
 
-    let html = match read_input(cli.input.as_deref()) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("failed to read input: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
+    if let Err(e) = run(cli) {
+        eprintln!("docoxide: error: {e}");
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
+}
 
-    let css = match cli.css.as_ref().map(fs::read_to_string).transpose() {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("failed to read css: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
+fn run(cli: Cli) -> docoxide::Result<()> {
+    use docoxide::{Config, Html};
 
-    let pdf = docoxide::convert(&html, css.as_deref());
+    let metadata = parse_metadata(&cli.metadata).map_err(docoxide::Error::PdfGeneration)?;
 
-    if let Err(e) = fs::write(&cli.output, pdf) {
-        eprintln!("failed to write {}: {e}", cli.output.display());
-        return ExitCode::FAILURE;
+    let mut config = Config::new().with_metadata(metadata);
+
+    for font_path in &cli.fonts {
+        config = config.with_font(font_path.as_path());
     }
 
-    ExitCode::SUCCESS
+    let mut html = match &cli.input {
+        Some(input) if input == "-" => Html::new(read_stdin()?),
+        Some(input) if looks_like_url(input) => {
+            let url: url::Url = input
+                .parse()
+                .map_err(|e| docoxide::Error::Network(format!("invalid URL '{input}': {e}")))?;
+            Html::new(url)
+        }
+        Some(input) => {
+            let abs = std::fs::canonicalize(input)?;
+            let url = url::Url::from_file_path(&abs)
+                .map_err(|_| docoxide::Error::Network(format!("could not convert path to URL: {input}")))?;
+            Html::new(url)
+        }
+        None => Html::new(read_stdin()?),
+    };
+
+    for css_path in &cli.stylesheets {
+        html = html.with_stylesheet(css_path.as_path());
+    }
+
+    if let Some(ref base_url) = cli.base_url {
+        match base_url.parse::<url::Url>() {
+            Ok(url) => html = html.with_base_url(url),
+            Err(e) => eprintln!("docoxide: warning: invalid base URL '{base_url}': {e}"),
+        }
+    }
+
+    html = html.with_config(&config);
+
+    let pdf = html.write_pdf()?;
+
+    match cli.output {
+        Some(ref path) => {
+            pdf.write_pdf(path)?;
+            if !cli.quiet {
+                eprintln!("docoxide: written {} page(s) to {}", pdf.page_count(), path.display());
+            }
+        }
+        None => {
+            io::stdout().write_all(pdf.as_bytes())?;
+        }
+    }
+
+    Ok(())
+}
+
+fn parse_metadata(entries: &[String]) -> std::result::Result<docoxide::Metadata, String> {
+    let mut meta = docoxide::Metadata::default();
+    for entry in entries {
+        let (key, value) = entry
+            .split_once('=')
+            .ok_or_else(|| format!("metadata must be key=value, got '{entry}'"))?;
+        match key.trim() {
+            "title" => meta.title = Some(value.to_owned()),
+            "author" => meta.author = Some(value.to_owned()),
+            "subject" => meta.subject = Some(value.to_owned()),
+            "keywords" => meta.keywords.push(value.to_owned()),
+            "creation_date" => meta.creation_date = Some(value.to_owned()),
+            other => return Err(format!("unknown metadata key '{other}'")),
+        }
+    }
+    Ok(meta)
+}
+
+fn read_stdin() -> io::Result<String> {
+    let mut buf = String::new();
+    io::stdin().read_to_string(&mut buf)?;
+    Ok(buf)
+}
+
+fn looks_like_url(s: &str) -> bool {
+    s.starts_with("http://") || s.starts_with("https://") || s.starts_with("file://")
 }

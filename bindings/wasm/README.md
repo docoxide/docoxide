@@ -15,29 +15,39 @@ npm install docoxide
 ## Library usage
 
 ```javascript
-const { convert } = require("docoxide");
+const { HTML, WritePdfOptions, convert } = require("docoxide");
 const fs = require("node:fs");
 
-const html = "<h1>Hello</h1>";
-const pdf = convert(html, null);
-
+// Using the HTML class
+const html = new HTML("<h1>Hello</h1>");
+const pdf = html.writePdf();
 fs.writeFileSync("hello.pdf", Buffer.from(pdf));
 ```
 
-With CSS:
+With stylesheets:
 
 ```javascript
-const pdf = convert(html, "h1 { color: red; }");
+const opts = new WritePdfOptions();
+opts.addStylesheet("h1 { color: red; }");
+opts.addStylesheet("body { margin: 1in; }");
+
+const pdf = new HTML("<h1>Hello</h1>").writePdf(opts);
 ```
 
-The function returns a `Uint8Array` of PDF bytes.
+Simple one-liner:
+
+```javascript
+const pdf = convert("<h1>Hello</h1>", "h1 { color: red; }");
+```
+
+The functions return a `Uint8Array` of PDF bytes.
 
 ## CLI usage
 
 ```sh
 npm install -g docoxide
 docoxide --input page.html --output page.pdf
-docoxide --input page.html --css style.css --output page.pdf
+docoxide --input page.html --stylesheet style.css --output page.pdf
 ```
 
 Reads from stdin if `--input` is omitted or set to `-`:
