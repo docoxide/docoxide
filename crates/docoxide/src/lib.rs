@@ -17,7 +17,7 @@ pub use types::Metadata;
 
 /// Convert an HTML document into PDF bytes.
 ///
-/// This is a convenience wrapper around [`Html::new`] and [`Html::write_pdf`].
+/// Shorthand for [`Html::new`] + [`Html::write_pdf`].
 #[cfg(not(target_arch = "wasm32"))]
 pub fn convert(html: &str, css: Option<&str>) -> Vec<u8> {
     pipeline::run_simple(html, css).unwrap_or_default()
