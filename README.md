@@ -60,7 +60,7 @@ echo '<h1>Hello</h1>' | docoxide --output hello.pdf
 | Add stylesheet (string) | `.with_stylesheet("...")` | `html.add_stylesheet("...")` | `html.addStylesheet("...")` |
 | Add stylesheet (CSS/file) | `.with_stylesheet(path)` | `html.add_stylesheet(CSS(...))` | |
 | Stylesheets at render | | `write_pdf(stylesheets=[...])` | `writePdf(opts)` |
-| Base URL | `.with_base_url(url)` | `HTML(base_url="...")` | |
+| Base URL | `.with_base_url(url)` | `HTML(base_url="...")` | `html.setBaseUrl("...")` |
 | Add font | `config.with_font(path)` | `html.add_font(filename="...")` | |
 | Set metadata | `config.with_metadata(...)` | `html.set_metadata(...)` | `html.setMetadata(meta)` |
 | Render to PDF | `html.write_pdf()` | `html.write_pdf()` | `await html.writePdf()` |

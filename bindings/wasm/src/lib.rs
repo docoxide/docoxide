@@ -64,6 +64,7 @@ pub struct HTML {
     source: docoxide::HtmlSource,
     stylesheets: Vec<String>,
     metadata: Option<Metadata>,
+    base_url: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -75,6 +76,7 @@ impl HTML {
             source: docoxide::HtmlSource::String(html.to_owned()),
             stylesheets: Vec::new(),
             metadata: None,
+            base_url: None,
         }
     }
 
@@ -88,6 +90,7 @@ impl HTML {
             source: docoxide::HtmlSource::Url(parsed),
             stylesheets: Vec::new(),
             metadata: None,
+            base_url: None,
         })
     }
 
@@ -103,6 +106,12 @@ impl HTML {
         self.metadata = Some(metadata);
     }
 
+    /// Sets the base URL for resolving relative links and images.
+    #[wasm_bindgen(js_name = "setBaseUrl")]
+    pub fn set_base_url(&mut self, url: &str) {
+        self.base_url = Some(url.to_owned());
+    }
+
     /// Renders the document to PDF and returns a PDF object.
     ///
     /// Pass a WritePdfOptions to apply additional stylesheets.
@@ -116,6 +125,12 @@ impl HTML {
         if let Some(opts) = options {
             if let Some(css) = opts.stylesheets_combined() {
                 html = html.with_stylesheet(css.as_str());
+            }
+        }
+
+        if let Some(base) = &self.base_url {
+            if let Ok(url) = base.parse::<url::Url>() {
+                html = html.with_base_url(url);
             }
         }
 
