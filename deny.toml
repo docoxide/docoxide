@@ -92,7 +92,13 @@ ignore = [
 allow = [
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "CDLA-Permissive-2.0",
+    "ISC",
     "MIT",
+    "MPL-2.0",
+    "Zlib",
     "Unicode-3.0",
 ]
 # The confidence threshold for detecting a license from license text.
@@ -213,8 +219,15 @@ skip = [
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite.
 skip-tree = [
-    #"ansi_term@0.11.0", # will be skipped along with _all_ of its direct and transitive dependencies
-    #{ crate = "ansi_term@0.11.0", depth = 20 },
+    { crate = "blitz-dom", reason = "vendored submodule" },
+    { crate = "blitz-html", reason = "vendored submodule" },
+    { crate = "blitz-net", reason = "vendored submodule" },
+    { crate = "blitz-paint", reason = "vendored submodule" },
+    { crate = "blitz-traits", reason = "vendored submodule" },
+    { crate = "fontique", reason = "vendored submodule" },
+    { crate = "parlance", reason = "vendored submodule" },
+    { crate = "parley", reason = "vendored submodule" },
+    { crate = "parley_data", reason = "vendored submodule" },
 ]
 
 # This section is considered when running `cargo deny check sources`.

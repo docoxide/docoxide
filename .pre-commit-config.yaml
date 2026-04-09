@@ -30,7 +30,14 @@ repos:
 
       - id: cargo-clippy
         name: cargo clippy
-        entry: cargo clippy --workspace --all-targets -- -D warnings
+        entry: cargo clippy --workspace --all-targets --exclude docoxide-wasm -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: cargo-clippy-wasm
+        name: cargo clippy (wasm)
+        entry: cargo clippy --target wasm32-unknown-unknown -p docoxide -p docoxide-wasm --lib -- -D warnings
         language: system
         types: [rust]
         pass_filenames: false

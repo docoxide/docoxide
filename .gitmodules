@@ -1,0 +1,6 @@
+[submodule "vendor/blitz"]
+	path = vendor/blitz
+	url = https://github.com/docoxide/blitz.git
+[submodule "vendor/parley"]
+	path = vendor/parley
+	url = https://github.com/linebender/parley.git

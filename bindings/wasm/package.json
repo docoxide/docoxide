@@ -1,6 +1,6 @@
 {
   "name": "docoxide",
-  "version": "0.1.0-alpha.2",
+  "version": "0.2.0-alpha.1",
   "description": "WASM bindings for docoxide, a fast HTML to PDF converter written in Rust",
   "main": "pkg-nodejs/docoxide_wasm.js",
   "module": "pkg-bundler/docoxide_wasm.js",

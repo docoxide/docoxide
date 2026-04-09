@@ -1,7 +1,7 @@
 [package]
 name = "docoxide"
 description = "HTML to PDF conversion library and CLI"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -20,4 +20,29 @@ name = "docoxide"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.6.0", features = ["derive"] }
+anyrender    = "0.8.0"
+blitz-dom    = "0.2.2"
+blitz-html   = "0.2.0"
+blitz-paint  = "0.2.1"
+blitz-traits = "0.2.0"
+clap         = { version = "4.6.0", features = ["derive"] }
+krilla       = "0.7.0"
+kurbo        = "0.13.0"
+parley       = { version = "0.8.0", default-features = false, features = ["std"] }
+peniko       = "0.6.0"
+skrifa       = "0.42.0"
+thiserror    = "2.0.18"
+url          = "2.5.8"
+
+[dev-dependencies]
+insta        = "1.47.2"
+url          = "2.5.8"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+blitz-net    = "0.2.1"
+tokio        = { version = "1.51.1", features = ["rt-multi-thread"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys               = "0.3.94"
+wasm-bindgen         = "0.2.117"
+wasm-bindgen-futures = "0.4.67"

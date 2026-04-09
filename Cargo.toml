@@ -9,6 +9,7 @@ default-members = [
     "crates/docoxide",
     "bindings/wasm",
 ]
+exclude = ["vendor/blitz", "vendor/parley"]
 
 [workspace.package]
 edition = "2024"
@@ -16,3 +17,17 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/docoxide/docoxide"
 authors = ["Ronie Martinez <ronmarti18@gmail.com>"]
 rust-version = "1.85"
+
+[patch.crates-io]
+blitz-dom    = { path = "vendor/blitz/packages/blitz-dom" }
+blitz-html   = { path = "vendor/blitz/packages/blitz-html" }
+blitz-net    = { path = "vendor/blitz/packages/blitz-net" }
+blitz-paint  = { path = "vendor/blitz/packages/blitz-paint" }
+blitz-traits = { path = "vendor/blitz/packages/blitz-traits" }
+parley       = { path = "vendor/parley/parley" }
+
+[patch."https://github.com/linebender/parley"]
+fontique     = { path = "vendor/parley/fontique" }
+parlance     = { path = "vendor/parley/parlance" }
+parley       = { path = "vendor/parley/parley" }
+parley_data  = { path = "vendor/parley/parley_data" }
