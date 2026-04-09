@@ -18,10 +18,11 @@ npm install docoxide
 const { HTML, Metadata, WritePdfOptions, convert } = require("docoxide");
 const fs = require("node:fs");
 
-// From a string
-const pdf = await new HTML("<h1>Hello</h1>").writePdf();
-fs.writeFileSync("hello.pdf", Buffer.from(pdf.asBytes()));
-console.log(`${pdf.pageCount} page(s)`);
+(async () => {
+  const pdf = await new HTML("<h1>Hello</h1>").writePdf();
+  fs.writeFileSync("hello.pdf", Buffer.from(pdf.asBytes()));
+  console.log(`${pdf.pageCount} page(s)`);
+})();
 ```
 
 From a URL:

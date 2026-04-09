@@ -34,7 +34,11 @@ HTML(string="<h1>Hello</h1>").write_pdf("hello.pdf")
 
 ```javascript
 const { HTML } = require("docoxide");
-const pdf = await new HTML("<h1>Hello</h1>").writePdf();
+
+(async () => {
+  const pdf = await new HTML("<h1>Hello</h1>").writePdf();
+  require("fs").writeFileSync("hello.pdf", Buffer.from(pdf.asBytes()));
+})();
 ```
 
 **CLI** (all three packages ship the same CLI):
