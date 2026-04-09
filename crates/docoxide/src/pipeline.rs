@@ -189,7 +189,22 @@ fn parse_datetime(s: &str) -> Option<krilla::metadata::DateTime> {
     let year: u16 = date_parts[0].parse().ok()?;
     let month: u8 = date_parts[1].parse().ok()?;
     let day: u8 = date_parts[2].parse().ok()?;
-    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+    if !(1..=12).contains(&month) {
+        return None;
+    }
+    let is_leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    let max_day = match month {
+        2 => {
+            if is_leap {
+                29
+            } else {
+                28
+            }
+        }
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
+    if !(1..=max_day).contains(&day) {
         return None;
     }
     let mut dt = krilla::metadata::DateTime::new(year).month(month).day(day);
