@@ -31,12 +31,14 @@ impl Pdf {
     pub fn write_pdf(&self, path: impl AsRef<std::path::Path>) -> Result<()> {
         let mut f = std::io::BufWriter::new(std::fs::File::create(path)?);
         std::io::Write::write_all(&mut f, &self.bytes)?;
+        std::io::Write::flush(&mut f)?;
         Ok(())
     }
 
     /// Writes the PDF to any [`std::io::Write`] destination.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn write_to(&self, mut writer: impl std::io::Write) -> std::io::Result<()> {
-        writer.write_all(&self.bytes)
+        writer.write_all(&self.bytes)?;
+        writer.flush()
     }
 }
