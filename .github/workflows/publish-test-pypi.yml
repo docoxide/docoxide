@@ -38,7 +38,7 @@ jobs:
           working-directory: bindings/python
           target: ${{ matrix.platform.target }}
           args: --release --out dist
-          sccache: "true"
+          sccache: ${{ matrix.platform.target != 'aarch64' }}
           manylinux: auto
           before-script-linux: yum install -y fontconfig-devel || apk add fontconfig-dev || (apt-get update && apt-get install -y libfontconfig1-dev)
 
