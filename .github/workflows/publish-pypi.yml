@@ -46,6 +46,7 @@ jobs:
           args: --release --out dist
           sccache: ${{ matrix.platform.target != 'aarch64' }}
           manylinux: auto
+          docker-options: ${{ matrix.platform.target == 'aarch64' && '--platform linux/arm64' || '' }}
           before-script-linux: yum install -y fontconfig-devel || apk add fontconfig-dev || (apt-get update && apt-get install -y libfontconfig1-dev)
 
       - name: Upload wheel artifact
