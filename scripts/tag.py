@@ -35,7 +35,7 @@ def build_tags(targets: set[str], versions: dict[str, str]) -> list[str]:
 
 
 def tag_exists(tag: str) -> bool:
-    result = subprocess.run(["git", "tag", "-l", tag], cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run(["git", "tag", "-l", tag], cwd=ROOT, capture_output=True, text=True, check=True)
     return tag in result.stdout.strip().splitlines()
 
 
