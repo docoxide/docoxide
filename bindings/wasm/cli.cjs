@@ -61,12 +61,51 @@ function parseMetadata(entries) {
   return meta;
 }
 
-async function main() {
-  const inputHtml = !opts.input || opts.input === "-"
-    ? readFileSync(0, "utf8")
-    : readFileSync(opts.input, "utf8");
+function looksLikeUrl(s) {
+  return s.startsWith("http://") || s.startsWith("https://");
+}
 
-  const html = new HTML(inputHtml);
+function loadLocalFile(filePath, resolve, pathToFileURL) {
+  const { dirname, join } = require("node:path");
+  const content = readFileSync(filePath, "utf8");
+  const dir = dirname(resolve(filePath));
+  const html = new HTML(content);
+  html.setBaseUrl(pathToFileURL(resolve(filePath)).href);
+
+  // Read <link rel="stylesheet"> files and add them explicitly
+  // since WASM fetch() cannot access local files
+  const linkRe = /<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["'][^>]*>/gi;
+  const hrefRe = /href=["']([^"']+)["']/i;
+  let match;
+  while ((match = linkRe.exec(content)) !== null) {
+    const hrefMatch = match[0].match(hrefRe);
+    if (hrefMatch && !hrefMatch[1].startsWith("http")) {
+      try {
+        const cssPath = join(dir, hrefMatch[1]);
+        html.addStylesheet(readFileSync(cssPath, "utf8"));
+      } catch (_) {
+        // skip missing files
+      }
+    }
+  }
+  return html;
+}
+
+async function main() {
+  const { resolve } = require("node:path");
+  const { pathToFileURL, fileURLToPath } = require("node:url");
+
+  let html;
+  if (!opts.input || opts.input === "-") {
+    html = new HTML(readFileSync(0, "utf8"));
+  } else if (opts.input.startsWith("file://")) {
+    const filePath = fileURLToPath(opts.input);
+    html = loadLocalFile(filePath, resolve, pathToFileURL);
+  } else if (looksLikeUrl(opts.input)) {
+    html = HTML.fromUrl(opts.input);
+  } else {
+    html = loadLocalFile(opts.input, resolve, pathToFileURL);
+  }
 
   if (opts.stylesheet) {
     for (const cssFile of opts.stylesheet) {

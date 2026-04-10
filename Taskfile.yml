@@ -16,15 +16,10 @@ tasks:
       - uv run docoxide {{.CLI_ARGS}}
 
   wasm:
-    desc: Run the WASM docoxide CLI via node (rebuilds all 5 wasm targets if sources changed)
+    desc: Run the WASM docoxide CLI via node
+    deps: [build:wasm]
     dir: bindings/wasm
     cmds:
-      - wasm-pack build --target nodejs --out-dir pkg-nodejs
-      - wasm-pack build --target bundler --out-dir pkg-bundler
-      - wasm-pack build --target web --out-dir pkg-web
-      - wasm-pack build --target no-modules --out-dir pkg-no-modules
-      - wasm-pack build --target deno --out-dir pkg-deno
-      - npm install --silent
       - node cli.cjs {{.CLI_ARGS}}
 
   test:
