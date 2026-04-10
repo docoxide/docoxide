@@ -66,25 +66,29 @@ function looksLikeUrl(s) {
 }
 
 function loadLocalFile(filePath, resolve, pathToFileURL) {
-  const { dirname, join } = require("node:path");
+  const { fileURLToPath } = require("node:url");
   const content = readFileSync(filePath, "utf8");
-  const dir = dirname(resolve(filePath));
+  const baseUrl = pathToFileURL(resolve(filePath));
   const html = new HTML(content);
-  html.setBaseUrl(pathToFileURL(resolve(filePath)).href);
+  html.setBaseUrl(baseUrl.href);
 
   // Read <link rel="stylesheet"> files and add them explicitly
   // since WASM fetch() cannot access local files
-  const linkRe = /<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["'][^>]*>/gi;
-  const hrefRe = /href=["']([^"']+)["']/i;
+  const linkRe = /<link\b[^>]*>/gi;
+  const relRe = /\brel=["']stylesheet["']/i;
+  const hrefRe = /\bhref=["']([^"']+)["']/i;
   let match;
   while ((match = linkRe.exec(content)) !== null) {
+    if (!relRe.test(match[0])) continue;
     const hrefMatch = match[0].match(hrefRe);
-    if (hrefMatch && !hrefMatch[1].startsWith("http")) {
+    if (hrefMatch) {
       try {
-        const cssPath = join(dir, hrefMatch[1]);
-        html.addStylesheet(readFileSync(cssPath, "utf8"));
-      } catch (_) {
-        // skip missing files
+        const cssUrl = new URL(hrefMatch[1], baseUrl);
+        if (cssUrl.protocol === "file:") {
+          html.addStylesheet(readFileSync(fileURLToPath(cssUrl), "utf8"));
+        }
+      } catch (err) {
+        process.stderr.write(`docoxide: warning: could not load stylesheet '${hrefMatch[1]}': ${err.message}\n`);
       }
     }
   }
