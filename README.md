@@ -10,13 +10,23 @@ Fast, browser-free HTML to PDF converter written in Rust with Python and WASM bi
 
 | Package | Language | Install | Docs |
 |---|---|---|---|
-| `docoxide` | Rust (lib + CLI) | `cargo add docoxide` / `cargo install docoxide` | [crates/docoxide](crates/docoxide/README.md) |
+| `docoxide` | Rust (lib + CLI) | [git dependency](#rust) | [crates/docoxide](crates/docoxide/README.md) |
 | `docoxide` (Python) | Python | `pip install docoxide` | [bindings/python](bindings/python/README.md) |
 | `docoxide` (npm) | JavaScript / Node | `npm install docoxide` | [bindings/wasm](bindings/wasm/README.md) |
 
+> **Note**: The Rust crate is not yet published to crates.io because it depends on
+> vendored forks of blitz and parley. Rust users can add it as a git dependency.
+> Python source distributions (sdist) are not published for the same reason;
+> pre-built wheels are available for Linux, macOS, and Windows.
+
 ## Quick start
 
-**Rust:**
+<a id="rust"></a>
+**Rust** (add to your `Cargo.toml`):
+
+```toml
+docoxide = { git = "https://github.com/docoxide/docoxide" }
+```
 
 ```rust
 let pdf = docoxide::Html::new("<h1>Hello</h1>").write_pdf()?;
