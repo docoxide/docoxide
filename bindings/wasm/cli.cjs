@@ -61,12 +61,55 @@ function parseMetadata(entries) {
   return meta;
 }
 
-async function main() {
-  const inputHtml = !opts.input || opts.input === "-"
-    ? readFileSync(0, "utf8")
-    : readFileSync(opts.input, "utf8");
+function looksLikeUrl(s) {
+  return s.startsWith("http://") || s.startsWith("https://");
+}
 
-  const html = new HTML(inputHtml);
+function loadLocalFile(filePath, resolve, pathToFileURL) {
+  const { fileURLToPath } = require("node:url");
+  const content = readFileSync(filePath, "utf8");
+  const baseUrl = pathToFileURL(resolve(filePath));
+  const html = new HTML(content);
+  html.setBaseUrl(baseUrl.href);
+
+  // Read <link rel="stylesheet"> files and add them explicitly
+  // since WASM fetch() cannot access local files
+  const linkRe = /<link\b[^>]*>/gi;
+  const relRe = /\brel=["']stylesheet["']/i;
+  const hrefRe = /\bhref=["']([^"']+)["']/i;
+  let match;
+  while ((match = linkRe.exec(content)) !== null) {
+    if (!relRe.test(match[0])) continue;
+    const hrefMatch = match[0].match(hrefRe);
+    if (hrefMatch) {
+      try {
+        const cssUrl = new URL(hrefMatch[1], baseUrl);
+        if (cssUrl.protocol === "file:") {
+          html.addStylesheet(readFileSync(fileURLToPath(cssUrl), "utf8"));
+        }
+      } catch (err) {
+        process.stderr.write(`docoxide: warning: could not load stylesheet '${hrefMatch[1]}': ${err.message}\n`);
+      }
+    }
+  }
+  return html;
+}
+
+async function main() {
+  const { resolve } = require("node:path");
+  const { pathToFileURL, fileURLToPath } = require("node:url");
+
+  let html;
+  if (!opts.input || opts.input === "-") {
+    html = new HTML(readFileSync(0, "utf8"));
+  } else if (opts.input.startsWith("file://")) {
+    const filePath = fileURLToPath(opts.input);
+    html = loadLocalFile(filePath, resolve, pathToFileURL);
+  } else if (looksLikeUrl(opts.input)) {
+    html = HTML.fromUrl(opts.input);
+  } else {
+    html = loadLocalFile(opts.input, resolve, pathToFileURL);
+  }
 
   if (opts.stylesheet) {
     for (const cssFile of opts.stylesheet) {

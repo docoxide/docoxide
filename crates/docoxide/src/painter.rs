@@ -478,9 +478,6 @@ impl PdfScenePainter {
     }
 }
 
-// TODO: The push_layer/push_clip_layer interaction with transforms has a known bug
-// where certain clip+transform stacks can hide content (e.g., HN titles).
-// This is ported from orig as-is; a focused rewrite is planned.
 impl PaintScene for PdfScenePainter {
     fn reset(&mut self) {
         self.current_ops.clear();
