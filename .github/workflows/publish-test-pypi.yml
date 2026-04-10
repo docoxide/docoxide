@@ -5,6 +5,7 @@ on:
     tags:
       - "all-v*"
       - "python-v*"
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -54,13 +55,14 @@ jobs:
 
   publish:
     name: Publish to TestPyPI
+    if: github.event_name != 'pull_request'
     needs: [build-wheels]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Download all wheels and sdist
+      - name: Download all wheels
         uses: actions/download-artifact@v8.0.1
         with:
           pattern: wheels-*

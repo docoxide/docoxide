@@ -3,22 +3,23 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  publish:
-    name: Publish docoxide to npm
+  build:
+    name: Build wasm targets
     if: >-
+      github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       startsWith(github.event.release.tag_name, 'all-v') ||
       startsWith(github.event.release.tag_name, 'wasm-v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.2
@@ -54,6 +55,7 @@ jobs:
           find pkg-nodejs pkg-bundler pkg-web pkg-no-modules pkg-deno -name .gitignore -delete
 
       - name: Publish to npm
+        if: github.event_name != 'pull_request'
         working-directory: bindings/wasm
         run: |
           version=$(node -p "require('./package.json').version")
