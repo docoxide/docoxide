@@ -34,7 +34,16 @@ def build_tags(targets: set[str], versions: dict[str, str]) -> list[str]:
     return [f"all-v{next(iter(distinct_versions))}"]
 
 
+def tag_exists(tag: str) -> bool:
+    result = subprocess.run(["git", "tag", "-l", tag], cwd=ROOT, capture_output=True, text=True, check=True)
+    return tag in result.stdout.strip().splitlines()
+
+
 def create_tag(tag: str, push: bool = False) -> None:
+    if tag_exists(tag):
+        err_console.print(f"[yellow]warning:[/yellow] tag '{tag}' already exists, skipping")
+        return
+
     subprocess.run(["git", "tag", tag], cwd=ROOT, check=True)
 
     if push:
