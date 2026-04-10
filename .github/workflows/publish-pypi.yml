@@ -50,42 +50,13 @@ jobs:
           name: wheels-${{ matrix.platform.os }}-${{ matrix.platform.target }}
           path: bindings/python/dist
 
-  build-sdist:
-    name: Build sdist
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      startsWith(github.event.release.tag_name, 'all-v') ||
-      startsWith(github.event.release.tag_name, 'python-v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-
-      - name: Build sdist
-        uses: PyO3/maturin-action@v1.50.1
-        with:
-          working-directory: bindings/python
-          command: sdist
-          args: --out dist
-
-      - name: Upload sdist artifact
-        uses: actions/upload-artifact@v7.0.0
-        with:
-          name: wheels-sdist
-          path: bindings/python/dist
-
   publish:
     name: Publish to PyPI
     if: >-
       github.event_name == 'workflow_dispatch' ||
       startsWith(github.event.release.tag_name, 'all-v') ||
       startsWith(github.event.release.tag_name, 'python-v')
-    needs: [build-wheels, build-sdist]
+    needs: [build-wheels]
     runs-on: ubuntu-latest
     permissions:
       contents: read
