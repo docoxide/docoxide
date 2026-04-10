@@ -34,16 +34,27 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Build wheel
+      - name: Build wheel (aarch64)
+        if: matrix.platform.target == 'aarch64'
         uses: PyO3/maturin-action@v1.50.1
         env:
           CFLAGS_aarch64_unknown_linux_gnu: "-D__ARM_ARCH=8"
-          RUST_FONTCONFIG_DLOPEN: ${{ matrix.platform.target == 'aarch64' && 'on' || '' }}
+          RUST_FONTCONFIG_DLOPEN: "on"
         with:
           working-directory: bindings/python
           target: ${{ matrix.platform.target }}
           args: --release --out dist
-          sccache: ${{ matrix.platform.target != 'aarch64' }}
+          manylinux: auto
+          before-script-linux: yum install -y fontconfig-devel || apk add fontconfig-dev || (apt-get update && apt-get install -y libfontconfig1-dev)
+
+      - name: Build wheel
+        if: matrix.platform.target != 'aarch64'
+        uses: PyO3/maturin-action@v1.50.1
+        with:
+          working-directory: bindings/python
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist
+          sccache: "true"
           manylinux: auto
           before-script-linux: yum install -y fontconfig-devel || apk add fontconfig-dev || (apt-get update && apt-get install -y libfontconfig1-dev)
 
