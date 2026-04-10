@@ -70,7 +70,7 @@ tasks:
     deps: [build:python]
     dir: bindings/python
     cmds:
-      - uv run --with pytest pytest tests/test_api.py -q
+      - uv run --with pytest pytest tests/test_api.py -v
 
   test:wasm:
     desc: Run WASM tests via Node.js
