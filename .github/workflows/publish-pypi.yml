@@ -19,11 +19,11 @@ jobs:
     permissions:
       contents: read
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           - { os: linux, runner: ubuntu-latest, target: x86_64 }
-          - { os: linux, runner: ubuntu-latest, target: aarch64 }
+          - { os: linux, runner: ubuntu-24.04-arm, target: aarch64 }
           - { os: macos, runner: macos-latest, target: x86_64 }
           - { os: macos, runner: macos-latest, target: aarch64 }
           - { os: windows, runner: windows-latest, target: x64 }
@@ -40,7 +40,7 @@ jobs:
           working-directory: bindings/python
           target: ${{ matrix.platform.target }}
           args: --release --out dist
-          sccache: ${{ matrix.platform.target != 'aarch64' }}
+          sccache: "true"
           manylinux: auto
           before-script-linux: yum install -y fontconfig-devel || apk add fontconfig-dev || (apt-get update && apt-get install -y libfontconfig1-dev)
 
