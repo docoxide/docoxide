@@ -44,6 +44,7 @@ tasks:
       - pkg-nodejs/docoxide_wasm.js
     cmds:
       - wasm-pack build --target nodejs --out-dir pkg-nodejs
+      - npm install --silent
 
   build:python:
     desc: Build Python extension
