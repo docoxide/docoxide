@@ -137,3 +137,51 @@ fn multipage_overflow() {
     );
     insta::assert_binary_snapshot!(".pdf", pdf.into_bytes());
 }
+
+#[test]
+fn at_page_letter_with_margins() {
+    let html = include_str!("fixtures/at-page.html");
+    let pdf = Html::new(html)
+        .with_config(&base_config())
+        .with_stylesheet(FONT_CSS)
+        .write_pdf()
+        .expect("conversion should succeed");
+    assert_eq!(pdf.page_count(), 1);
+    insta::assert_binary_snapshot!(".pdf", pdf.into_bytes());
+}
+
+#[test]
+fn at_page_landscape() {
+    let html = include_str!("fixtures/at-page-landscape.html");
+    let pdf = Html::new(html)
+        .with_config(&base_config())
+        .with_stylesheet(FONT_CSS)
+        .write_pdf()
+        .expect("conversion should succeed");
+    assert_eq!(pdf.page_count(), 1);
+    insta::assert_binary_snapshot!(".pdf", pdf.into_bytes());
+}
+
+#[test]
+fn page_break_css_class() {
+    let html = include_str!("fixtures/page-break-css-class.html");
+    let pdf = Html::new(html)
+        .with_config(&base_config())
+        .with_stylesheet(FONT_CSS)
+        .write_pdf()
+        .expect("conversion should succeed");
+    assert_eq!(pdf.page_count(), 2, "expected 2 pages from CSS class break-before");
+    insta::assert_binary_snapshot!(".pdf", pdf.into_bytes());
+}
+
+#[test]
+fn page_break_before() {
+    let html = include_str!("fixtures/page-break.html");
+    let pdf = Html::new(html)
+        .with_config(&base_config())
+        .with_stylesheet(FONT_CSS)
+        .write_pdf()
+        .expect("conversion should succeed");
+    assert_eq!(pdf.page_count(), 3, "expected 3 pages from break-before: page");
+    insta::assert_binary_snapshot!(".pdf", pdf.into_bytes());
+}
