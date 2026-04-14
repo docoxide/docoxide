@@ -26,11 +26,13 @@ blitz-html   = "0.2.0"
 blitz-paint  = "0.2.1"
 blitz-traits = "0.2.0"
 clap         = { version = "4.6.0", features = ["derive"] }
+cssparser    = "0.36"
 krilla       = "0.7.0"
 kurbo        = "0.13.0"
 parley       = { version = "0.8.0", default-features = false, features = ["std"] }
 peniko       = "0.6.0"
 skrifa       = "0.42.0"
+style        = { version = "0.16.0", package = "stylo" }
 thiserror    = "2.0.18"
 url          = "2.5.8"
 

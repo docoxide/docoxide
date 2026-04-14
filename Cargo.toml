@@ -9,7 +9,7 @@ default-members = [
     "crates/docoxide",
     "bindings/wasm",
 ]
-exclude = ["vendor/blitz", "vendor/parley"]
+exclude = ["vendor/blitz", "vendor/parley", "vendor/stylo"]
 
 [workspace.package]
 edition = "2024"
@@ -25,6 +25,11 @@ blitz-net    = { path = "vendor/blitz/packages/blitz-net" }
 blitz-paint  = { path = "vendor/blitz/packages/blitz-paint" }
 blitz-traits = { path = "vendor/blitz/packages/blitz-traits" }
 parley       = { path = "vendor/parley/parley" }
+style        = { path = "vendor/stylo/style", package = "stylo" }
+style_traits = { path = "vendor/stylo/style_traits", package = "stylo_traits" }
+style_atoms  = { path = "vendor/stylo/stylo_atoms", package = "stylo_atoms" }
+style_dom    = { path = "vendor/stylo/stylo_dom", package = "stylo_dom" }
+selectors    = { path = "vendor/stylo/selectors" }
 
 [patch."https://github.com/linebender/parley"]
 fontique     = { path = "vendor/parley/fontique" }

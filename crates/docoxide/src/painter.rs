@@ -288,6 +288,10 @@ impl PdfScenePainter {
         self.metadata = Some(metadata);
     }
 
+    pub fn set_margins(&mut self, margins: PageMargins) {
+        self.margins = margins;
+    }
+
     pub fn finish_page(&mut self) {
         let ops = std::mem::take(&mut self.current_ops);
         self.pages.push(PageData {

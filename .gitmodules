@@ -4,3 +4,6 @@
 [submodule "vendor/parley"]
 	path = vendor/parley
 	url = https://github.com/linebender/parley.git
+[submodule "vendor/stylo"]
+	path = vendor/stylo
+	url = https://github.com/docoxide/stylo.git

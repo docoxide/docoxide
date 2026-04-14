@@ -31,23 +31,31 @@ pub fn run(html: Html) -> Result<Pdf> {
     let mut font_ctx = build_font_context();
     resolve_fonts(&mut font_ctx, config.fonts)?;
 
-    // A4 default; @page support will make this configurable
-    let width_pt: f32 = 595.28;
-    let height_pt: f32 = 841.89;
-    let width_px = (width_pt * 96.0 / 72.0) as u32;
-    let height_px = (height_pt * 96.0 / 72.0) as u32;
-    let viewport = Viewport::new(width_px, height_px, 1.0, ColorScheme::Light);
-
     let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build()?;
     let _guard = rt.enter();
     let provider = Arc::new(blitz_net::Provider::new(None));
     let (html_string, base_url_str) = load_source(source, base_url, &rt, &provider)?;
     let extra_css = resolve_stylesheets(stylesheets)?;
 
+    let inline_css = crate::page_rule::extract_style_css(&html_string);
+    let combined_css = format!("{inline_css}\n{extra_css}");
+    let page_info = crate::page_rule::parse_page_rules(&combined_css);
+
+    let (mut width_pt, mut height_pt) = page_info.size.as_ref().map(|s| s.to_pts()).unwrap_or((595.28, 841.89));
+    if page_info.landscape {
+        std::mem::swap(&mut width_pt, &mut height_pt);
+    }
+    let margins = page_info.margins.unwrap_or_default();
+
+    let width_px = (width_pt * 96.0 / 72.0) as u32;
+    let height_px = (height_pt * 96.0 / 72.0) as u32;
+    let viewport = Viewport::new(width_px, height_px, 1.0, ColorScheme::Light);
+
     let doc_config = blitz_dom::DocumentConfig {
         viewport: Some(viewport),
         base_url: base_url_str,
         font_ctx: Some(font_ctx),
+        media_type: Some(style::media_queries::MediaType::print()),
         ua_stylesheets: Some(vec![BLITZ_DEFAULT_CSS.to_string(), DEFAULT_CSS.to_string()]),
         net_provider: Some(provider.clone() as Arc<dyn NetProvider>),
         ..Default::default()
@@ -67,7 +75,15 @@ pub fn run(html: Html) -> Result<Pdf> {
     }
     doc.resolve(0.0);
 
-    render_pdf(&mut doc, width_pt, height_pt, width_px, height_px, &config.metadata)
+    render_pdf(
+        &mut doc,
+        width_pt,
+        height_pt,
+        width_px,
+        height_px,
+        &config.metadata,
+        &margins,
+    )
 }
 
 /// Convenience entry point for the simple `convert(html, css)` API.
@@ -107,31 +123,44 @@ fn render_pdf(
     width_px: u32,
     height_px: u32,
     metadata: &Metadata,
+    margins: &crate::types::PageMargins,
 ) -> Result<Pdf> {
     let scale = 1.0f64;
     let phys_w = (width_px as f64 * scale) as u32;
     let content_height_px = doc.root_element().final_layout.size.height.ceil();
     let page_height = height_px as f32;
 
-    // Build page start positions from overflow
+    let forced_breaks = collect_page_breaks(doc);
+
     let mut page_starts: Vec<f32> = vec![0.0];
-    if content_height_px > page_height {
-        let overflow_pages = ((content_height_px - page_height) / page_height).ceil() as usize;
-        for i in 1..=overflow_pages {
-            page_starts.push(i as f32 * page_height);
+    for break_y in &forced_breaks {
+        let last_start = page_starts.last().unwrap();
+        if *break_y > last_start + 1.0 && *break_y < content_height_px {
+            page_starts.push(*break_y);
         }
     }
+
+    let last_forced = *page_starts.last().unwrap();
+    let remaining = content_height_px - last_forced;
+    if remaining > page_height {
+        let overflow_pages = (remaining / page_height).ceil() as usize;
+        for i in 1..overflow_pages {
+            page_starts.push(last_forced + i as f32 * page_height);
+        }
+    }
+
+    adjust_breaks_for_avoid(doc, &mut page_starts, page_height);
 
     let page_count = page_starts.len();
 
     let mut painter = PdfScenePainter::new(width_pt, height_pt, phys_w);
+    painter.set_margins(*margins);
     if let Some(meta) = into_krilla_metadata(metadata)? {
         painter.set_metadata(meta);
     }
 
     for (i, start_y) in page_starts.iter().enumerate() {
         let next_y = page_starts.get(i + 1).copied().unwrap_or(*start_y + page_height);
-        // Subtract 1px to avoid painting elements that start exactly at the next break
         let visible_h = ((next_y - *start_y).min(page_height).max(1.0) - 1.0).max(1.0) as u32;
         doc.set_viewport_scroll(blitz_dom::Point {
             x: 0.0,
@@ -143,6 +172,82 @@ fn render_pdf(
 
     let bytes = painter.finish().map_err(crate::error::Error::PdfGeneration)?;
     Ok(Pdf { bytes, page_count })
+}
+
+fn collect_page_breaks(doc: &HtmlDocument) -> Vec<f32> {
+    let tree = doc.tree();
+    let mut breaks = Vec::new();
+
+    for (_, node) in tree.iter() {
+        let Some(styles) = node.primary_styles() else {
+            continue;
+        };
+        let break_before = styles.clone_break_before();
+        if matches!(
+            break_before,
+            style::values::computed::BreakBetween::Page | style::values::computed::BreakBetween::Always
+        ) {
+            breaks.push(compute_absolute_y(node));
+        }
+    }
+
+    breaks.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    breaks.dedup();
+    breaks
+}
+
+fn adjust_breaks_for_avoid(doc: &HtmlDocument, page_starts: &mut Vec<f32>, page_height: f32) {
+    let tree = doc.tree();
+
+    let mut avoid_elements: Vec<(f32, f32)> = Vec::new();
+    for (_, node) in tree.iter() {
+        let Some(styles) = node.primary_styles() else {
+            continue;
+        };
+        if matches!(
+            styles.clone_break_inside(),
+            style::values::computed::BreakWithin::Avoid | style::values::computed::BreakWithin::AvoidPage
+        ) {
+            let top_y = compute_absolute_y(node);
+            let height = node.final_layout.size.height;
+            if height > 0.0 && height < page_height {
+                avoid_elements.push((top_y, top_y + height));
+            }
+        }
+    }
+
+    if avoid_elements.is_empty() {
+        return;
+    }
+
+    #[allow(clippy::needless_range_loop)]
+    for i in 1..page_starts.len() {
+        let break_y = page_starts[i];
+        for &(top, bottom) in &avoid_elements {
+            if break_y > top && break_y < bottom {
+                page_starts[i] = top;
+                break;
+            }
+        }
+    }
+
+    page_starts.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    page_starts.dedup_by(|a, b| (*a - *b).abs() < 1.0);
+}
+
+fn compute_absolute_y(node: &blitz_dom::Node) -> f32 {
+    let tree = node.tree();
+    let mut y = node.final_layout.location.y;
+    let mut current_parent = node.layout_parent.get();
+    while let Some(parent_id) = current_parent {
+        if let Some(parent) = tree.get(parent_id) {
+            y += parent.final_layout.location.y;
+            current_parent = parent.layout_parent.get();
+        } else {
+            break;
+        }
+    }
+    y
 }
 
 fn into_krilla_metadata(meta: &Metadata) -> Result<Option<krilla::metadata::Metadata>> {
@@ -254,8 +359,16 @@ pub async fn run(html: Html) -> Result<Pdf> {
     };
     let extra_css = resolve_stylesheets(stylesheets)?;
 
-    let width_pt: f32 = 595.28;
-    let height_pt: f32 = 841.89;
+    let inline_css = crate::page_rule::extract_style_css(&html_string);
+    let combined_css = format!("{inline_css}\n{extra_css}");
+    let page_info = crate::page_rule::parse_page_rules(&combined_css);
+
+    let (mut width_pt, mut height_pt) = page_info.size.as_ref().map(|s| s.to_pts()).unwrap_or((595.28, 841.89));
+    if page_info.landscape {
+        std::mem::swap(&mut width_pt, &mut height_pt);
+    }
+    let margins = page_info.margins.unwrap_or_default();
+
     let width_px = (width_pt * 96.0 / 72.0) as u32;
     let height_px = (height_pt * 96.0 / 72.0) as u32;
     let viewport = Viewport::new(width_px, height_px, 1.0, ColorScheme::Light);
@@ -266,6 +379,7 @@ pub async fn run(html: Html) -> Result<Pdf> {
         viewport: Some(viewport),
         base_url: base_url_str,
         font_ctx: Some(font_ctx),
+        media_type: Some(style::media_queries::MediaType::print()),
         ua_stylesheets: Some(vec![BLITZ_DEFAULT_CSS.to_string(), DEFAULT_CSS.to_string()]),
         net_provider: Some(provider.clone() as Arc<dyn NetProvider>),
         ..Default::default()
@@ -276,10 +390,6 @@ pub async fn run(html: Html) -> Result<Pdf> {
         doc.add_user_agent_stylesheet(&extra_css);
     }
 
-    // Poll until all pending network requests (images, CSS, fonts) finish.
-    // Each tick yields to the JS event loop via setTimeout(0). If a fetch
-    // hangs, we give up after MAX_TICKS (~400ms in browsers). Assets that
-    // fail to load are silently skipped by blitz (broken images, missing CSS).
     const MAX_TICKS: usize = 100;
     for _ in 0..MAX_TICKS {
         doc.resolve(0.0);
@@ -290,7 +400,15 @@ pub async fn run(html: Html) -> Result<Pdf> {
     }
     doc.resolve(0.0);
 
-    render_pdf(&mut doc, width_pt, height_pt, width_px, height_px, &config.metadata)
+    render_pdf(
+        &mut doc,
+        width_pt,
+        height_pt,
+        width_px,
+        height_px,
+        &config.metadata,
+        &margins,
+    )
 }
 
 #[cfg(target_arch = "wasm32")]

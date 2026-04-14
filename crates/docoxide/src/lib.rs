@@ -2,6 +2,7 @@ pub mod config;
 pub mod error;
 pub mod fonts;
 pub mod html;
+pub mod page_rule;
 pub mod painter;
 pub mod pdf;
 pub mod pipeline;
