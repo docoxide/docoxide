@@ -44,7 +44,7 @@ jobs:
         run: cargo clippy --target wasm32-unknown-unknown -p docoxide -p docoxide-wasm --lib -- -D warnings
 
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2.75.3
+        uses: taiki-e/install-action@v2.75.14
         with:
           tool: cargo-deny
 
@@ -127,7 +127,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.9.1
 
       - name: Install wasm-pack
-        uses: taiki-e/install-action@v2.75.3
+        uses: taiki-e/install-action@v2.75.14
         with:
           tool: wasm-pack
 
