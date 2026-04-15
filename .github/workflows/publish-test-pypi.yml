@@ -43,7 +43,7 @@ jobs:
           before-script-linux: yum install -y fontconfig-devel || apk add fontconfig-dev || (apt-get update && apt-get install -y libfontconfig1-dev)
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: wheels-${{ matrix.platform.os }}-${{ matrix.platform.target }}
           path: bindings/python/dist
