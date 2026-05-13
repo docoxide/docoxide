@@ -20,7 +20,7 @@ name = "docoxide"
 path = "src/main.rs"
 
 [dependencies]
-anyrender    = "0.8.0"
+anyrender    = "0.9.0"
 blitz-dom    = "0.2.2"
 blitz-html   = "0.2.0"
 blitz-paint  = "0.2.1"
